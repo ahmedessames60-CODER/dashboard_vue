@@ -16,3 +16,8 @@
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
 }
+
+
+body {
+  @apply bg-white text-gray-900 dark:bg-zinc-950 dark:text-gray-100 transition-colors duration-200;
+}
