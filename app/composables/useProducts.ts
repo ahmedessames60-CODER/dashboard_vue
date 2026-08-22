@@ -1,57 +1,52 @@
-import type { IProduct, IProductFilters } from '~/types/product'
+import type { IProduct } from '@/types/product'
 
 export const useProducts = () => {
-  const isLoading = ref(false)
+  const products = useState<IProduct[]>('products', () => [])
 
-  const products = useState<IProduct[]>('products-list', () => [])
+  //  State الخاصة بالديالوج والمنتج المحدد
+  const isDeleteDialogOpen = ref(false)
+  const productToDeleteId = ref<number | null>(null)
 
-  const filters = reactive<IProductFilters>({
-    search: '',
-    category: ''
-  })
+  //  دالة طلب الحذف (تفتح الديالوج وتحدد الـ ID)
+  const confirmDelete = (id: number) => {
+    productToDeleteId.value = id
+    isDeleteDialogOpen.value = true
+  }
 
-  const filteredProducts = computed(() => {
-    return products.value.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(filters.search.toLowerCase())
-      const matchesCategory = !filters.category || product.category === filters.category
-      return matchesSearch && matchesCategory
-    })
-  })
-
-  const addProduct = async (productData: Omit<IProduct, 'id' | 'createdAt'>) => {
-    isLoading.value = true
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      const today = new Date().toISOString().split('T')[0] ?? ''
-
-      const newProduct: IProduct = {
-        ...productData,
-        id: Date.now(),
-        createdAt: today
-      }
-      products.value.unshift(newProduct)
-    } finally {
-      isLoading.value = false
+  //  دالة الحذف الفعلية (تنفذ وتغلق)
+  const executeDelete = () => {
+    if (productToDeleteId.value !== null) {
+      products.value = products.value.filter(p => p.id !== productToDeleteId.value)
+      closeDeleteDialog()
     }
   }
 
-  const deleteProduct = async (id: number) => {
-    isLoading.value = true
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      products.value = products.value.filter(p => p.id !== id)
-    } finally {
-      isLoading.value = false
+  //  دالة إغلاق الديالوج وتصفير الـ ID
+  const closeDeleteDialog = () => {
+    isDeleteDialogOpen.value = false
+    productToDeleteId.value = null
+  }
+
+  // دالة التعامل مع رفع الصور
+  const handleImageUpload = (event: Event, targetForm: { image?: string }) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        targetForm.image = e.target?.result as string
+      }
+      reader.readAsDataURL(file)
     }
   }
 
   return {
     products,
-    filteredProducts,
-    filters,
-    isLoading,
-    addProduct,
-    deleteProduct
+    isDeleteDialogOpen,
+    confirmDelete,
+    executeDelete,
+    closeDeleteDialog,
+    handleImageUpload
   }
 }

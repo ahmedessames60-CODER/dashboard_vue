@@ -1,11 +1,11 @@
 <script setup lang="ts">
 const {
-  products,
+  categories,
   isDeleteDialogOpen,
   confirmDelete,
   executeDelete,
   closeDeleteDialog
-} = useProducts()
+} = useCategories()
 </script>
 
 <template>
@@ -14,31 +14,31 @@ const {
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-          قائمة المنتجات
+          قائمة التصنيفات
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          إدارة المنتجات وتتبع الحالات بسهولة
+          إدارة التصنيفات وتتبع الحالات بسهولة
         </p>
       </div>
 
       <NuxtLink
-        to="/dash/products/create"
+        to="/dash/categories/create"
         class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 transition-all duration-200 group"
       >
         <span class="text-lg leading-none group-hover:rotate-90 transition-transform duration-300">+</span>
-        إضافة منتج جديد
+        إضافة تصنيف جديد
       </NuxtLink>
     </div>
 
-    <!-- شبكة الكروت -->
+    <!-- الكود المعدل -->
     <div
-      v-if="products.length > 0"
+      v-if="categories.length > 0"
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      <ProductCard
-        v-for="product in products"
-        :key="product.id"
-        :product="product"
+      <CategoryRow
+        v-for="category in categories"
+        :key="category.id"
+        :category="category"
         @delete="confirmDelete"
       />
     </div>
@@ -54,12 +54,6 @@ const {
       <p class="text-slate-500 dark:text-slate-400 font-medium text-sm">
         لا توجد منتجات مضافة حتى الآن.
       </p>
-      <NuxtLink
-        to="/dash/products/create"
-        class="inline-block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
-      >
-        قم بإضافة منتجك الآن ←
-      </NuxtLink>
     </div>
 
     <!-- ديالوج تأكيد الحذف -->
@@ -83,7 +77,7 @@ const {
           </div>
 
           <p class="text-sm text-slate-600 dark:text-slate-300">
-            هل أنت متأكد من رغبتك في حذف هذا المنتج؟ لا يمكنك التراجع عن هذا الإجراء لاحقاً.
+            هل أنت متأكد من رغبتك في حذف هذا التنصيف لا يمكنك التراجع عن هذا الإجراء لاحقاً.
           </p>
 
           <div class="flex justify-end gap-3 pt-2">

@@ -1,214 +1,151 @@
 <script setup lang="ts">
-import { useProducts } from '~/composables/useProducts'
+const { products, handleImageUpload } = useProducts()
 
-const router = useRouter()
-const { addProduct, isLoading } = useProducts()
-
-const form = reactive({
+const form = ref({
   name: '',
-  category: 'electronics',
-  price: 0,
-  discountPrice: null as number | null,
-  inStock: true,
-  image: ''
+  category: '',
+  image: '',
+  price: '',
+  status: 'متوفر'
 })
 
-const categories = [
-  { label: 'إلكترونيات', value: 'electronics' },
-  { label: 'ملابس', value: 'clothing' },
-  { label: 'أثاث', value: 'furniture' }
-]
-
-const handleImageUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    form.image = e.target?.result as string
-  }
-  reader.readAsDataURL(file)
+// دالة تفريغ حقل الصورة
+const clearImage = () => {
+  form.value.image = ''
 }
 
-const removeImage = () => {
-  form.image = ''
-}
-
-const handleSubmit = async () => {
-  if (!form.name.trim() || form.price <= 0) return
-
-  await addProduct({
-    name: form.name,
-    category: form.category,
-    price: Number(form.price),
-    discountPrice: form.discountPrice ? Number(form.discountPrice) : null,
-    inStock: form.inStock,
-    image: form.image
+const addProduct = () => {
+  products.value.push({
+    id: Date.now(),
+    name: form.value.name,
+    category: form.value.category,
+    image: form.value.image,
+    price: Number(form.value.price),
+    inStock: form.value.status === 'متوفر',
+    createdAt: new Date().toISOString()
   })
 
-  router.push('/dash/products')
+  navigateTo('/dash/products')
 }
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto py-6 space-y-6">
-    <!-- هيدر الصفحة وزر العودة -->
-    <div class="flex items-center justify-between border-b border-gray-200 dark:border-zinc-800 pb-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          إضافة منتج جديد
-        </h1>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          أدخل بيانات المنتج الجديد لإضافته إلى قائمة البيانات.
-        </p>
-      </div>
-
-      <UButton
+  <form
+    class="max-w-xl mx-auto my-10 p-6 sm:p-8 bg-white dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 transition-colors duration-300"
+    @submit.prevent="addProduct"
+  >
+    <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">
+        إضافة منتج جديد
+      </h2>
+      <NuxtLink
         to="/dash/products"
-        color="neutral"
-        variant="ghost"
-        icon="i-heroicons-arrow-right"
+        class="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
       >
-        رجوع للجدول
-      </UButton>
+        إلغاء
+      </NuxtLink>
     </div>
 
-    <!-- نموذج إضافة المنتج -->
-    <form
-      class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm space-y-5"
-      @submit.prevent="handleSubmit"
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">اسم المنتج</label>
+      <input
+        v-model="form.name"
+        type="text"
+        required
+        placeholder="أدخل اسم المنتج"
+        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+      >
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">التصنيف</label>
+      <input
+        v-model="form.category"
+        type="text"
+        required
+        placeholder="مثال: إلكترونيات، ملابس"
+        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+      >
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">السعر</label>
+      <input
+        v-model="form.price"
+        type="number"
+        required
+        placeholder="0.00"
+        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+      >
+    </div>
+
+    <!-- حقل اختيار المعاينة وحذف الصورة -->
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">صورة المنتج</label>
+      <div class="space-y-3">
+        <!-- مربع المعاينة -->
+        <div
+          v-if="form.image"
+          class="relative w-32 h-32 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-100 dark:bg-slate-800/60 overflow-hidden group shadow-lg"
+        >
+          <img
+            :src="form.image"
+            alt="Preview"
+            class="w-full h-full object-cover"
+          >
+          <!-- زر مسح الصورة -->
+          <button
+            type="button"
+            class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-lg backdrop-blur-md transition-colors"
+            title="حذف الصورة"
+            @click="clearImage"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- زر اختيار الصورة المنسق -->
+        <label class="block cursor-pointer">
+          <div class="w-full px-4 py-3.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl text-slate-500 dark:text-slate-400 text-sm flex items-center justify-between transition-colors">
+            <span>{{ form.image ? 'تغيير الصورة المختارة...' : 'اختر صورة من الجهاز...' }}</span>
+            <span class="text-xs bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-500/30 font-medium">Browse</span>
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleImageUpload($event, form)"
+          >
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">الحالة</label>
+      <select
+        v-model="form.status"
+        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+      >
+        <option
+          value="متوفر"
+          class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+        >
+          متوفر
+        </option>
+        <option
+          value="غير متوفر"
+          class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+        >
+          غير متوفر
+        </option>
+      </select>
+    </div>
+
+    <button
+      type="submit"
+      class="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 transition-all duration-200 mt-2"
     >
-      <!-- رفع صورة المنتج -->
-      <UFormField label="صورة المنتج">
-        <div class="space-y-3">
-          <div
-            v-if="!form.image"
-            class="border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl p-6 text-center hover:border-primary-500 transition-colors cursor-pointer relative"
-          >
-            <input
-              type="file"
-              accept="image/*"
-              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              @change="handleImageUpload"
-            >
-            <UIcon
-              name="i-heroicons-photo"
-              class="w-10 h-10 mx-auto text-gray-400 dark:text-gray-500 mb-2"
-            />
-            <p class="text-xs text-gray-600 dark:text-gray-400 font-medium">
-              اضغط هنا لرفع صورة المنتج أو اسحب الصورة إلى هنا
-            </p>
-            <p class="text-[10px] text-gray-400 mt-1">
-              PNG, JPG, WEBP حتى 5MB
-            </p>
-          </div>
-
-          <div
-            v-else
-            class="relative w-32 h-32 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 group"
-          >
-            <img
-              :src="form.image"
-              alt="معاينة المنتج"
-              class="w-full h-full object-cover"
-            >
-            <button
-              type="button"
-              class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-90 hover:opacity-100 transition-opacity"
-              @click="removeImage"
-            >
-              <UIcon
-                name="i-heroicons-x-mark"
-                class="w-4 h-4"
-              />
-            </button>
-          </div>
-        </div>
-      </UFormField>
-
-      <!-- اسم المنتج -->
-      <UFormField
-        label="اسم المنتج"
-        required
-      >
-        <UInput
-          v-model="form.name"
-          placeholder="أدخل اسم المنتج..."
-          class="w-full"
-        />
-      </UFormField>
-
-      <!-- القسم -->
-      <UFormField
-        label="التصنيف"
-        required
-      >
-        <USelect
-          v-model="form.category"
-          :options="categories"
-          class="w-full"
-        />
-      </UFormField>
-
-      <!-- السعر وسعر الخصم -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UFormField
-          label="السعر الأساسي ($)"
-          required
-        >
-          <UInput
-            v-model.number="form.price"
-            type="number"
-            min="0"
-            placeholder="0.00"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="السعر بعد الخصم ($)">
-          <UInput
-            v-model.number="form.discountPrice"
-            type="number"
-            min="0"
-            placeholder="اختياري"
-            class="w-full"
-          />
-        </UFormField>
-      </div>
-
-      <!-- حالة التوفر -->
-      <div class="flex items-center justify-between pt-2">
-        <div>
-          <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
-            حالة التوفر
-          </p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            تحديد ما إذا كان المنتج متاحاً للبيع حالياً
-          </p>
-        </div>
-        <USwitch v-model="form.inStock" />
-      </div>
-
-      <!-- أزرار الإجراءات -->
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
-        <UButton
-          to="/dash/products"
-          color="neutral"
-          variant="outline"
-        >
-          إلغاء
-        </UButton>
-
-        <UButton
-          type="submit"
-          color="primary"
-          :loading="isLoading"
-          icon="i-heroicons-check"
-        >
-          حفظ المنتج
-        </UButton>
-      </div>
-    </form>
-  </div>
+      إضافة المنتج
+    </button>
+  </form>
 </template>
